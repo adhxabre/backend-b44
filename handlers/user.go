@@ -52,7 +52,6 @@ func (h *handler) CreateUser(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, dto.ErrorResult{Code: http.StatusBadRequest, Message: err.Error()})
 	}
 
-	// data form pattern submit to pattern entity db user
 	user := models.User{
 		Name:     request.Name,
 		Email:    request.Email,
@@ -60,6 +59,40 @@ func (h *handler) CreateUser(c echo.Context) error {
 	}
 
 	data, err := h.UserRepository.CreateUser(user)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, dto.ErrorResult{Code: http.StatusInternalServerError, Message: err.Error()})
+	}
+
+	return c.JSON(http.StatusOK, dto.SuccessResult{Code: http.StatusOK, Data: convertResponse(data)})
+}
+
+func (h *handler) UpdateUser(c echo.Context) error {
+	request := new(usersdto.UpdateUserRequest)
+	if err := c.Bind(&request); err != nil {
+		return c.JSON(http.StatusBadRequest, dto.ErrorResult{Code: http.StatusBadRequest, Message: err.Error()})
+	}
+
+	id, _ := strconv.Atoi(c.Param("id"))
+
+	user, err := h.UserRepository.GetUser(id)
+
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, dto.ErrorResult{Code: http.StatusBadRequest, Message: err.Error()})
+	}
+
+	if request.Name != "" {
+		user.Name = request.Name
+	}
+
+	if request.Email != "" {
+		user.Email = request.Email
+	}
+
+	if request.Password != "" {
+		user.Password = request.Password
+	}
+
+	data, err := h.UserRepository.UpdateUser(user, id)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, dto.ErrorResult{Code: http.StatusInternalServerError, Message: err.Error()})
 	}
