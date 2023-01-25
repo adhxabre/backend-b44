@@ -1,8 +1,8 @@
 package main
 
 import (
+	"dumbmerch/routes"
 	"fmt"
-	"fundamental-golang-result-new/routes"
 
 	"github.com/labstack/echo"
 )

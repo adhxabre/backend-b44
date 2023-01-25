@@ -28,7 +28,7 @@ Group Routes are needed in API development to differentiate a route for API or f
 	package routes
 
 	import (
-		"fundamental-golang-result-new/handlers"
+		"dumbmerch/handlers"
 
 		"github.com/labstack/echo"
 	)
@@ -184,7 +184,7 @@ Group Routes are needed in API development to differentiate a route for API or f
 
 	import (
 		"fmt"
-		"fundamental-golang-result-new/routes"
+		"dumbmerch/routes"
 
 		"github.com/labstack/echo"
 	)

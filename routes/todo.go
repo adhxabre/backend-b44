@@ -1,7 +1,7 @@
 package routes
 
 import (
-	"fundamental-golang-result-new/handlers"
+	"dumbmerch/handlers"
 
 	"github.com/labstack/echo"
 )
