@@ -14,7 +14,7 @@ Routing in `labstack/echo` is pretty straightforward. Make sure you already unde
 
 - import package
 
-  ```go
+ 	 ```go
 	import (
 	"encoding/json"
 	"fmt"
@@ -22,21 +22,21 @@ Routing in `labstack/echo` is pretty straightforward. Make sure you already unde
 
 	"github.com/labstack/echo"
 	)
-  ```
+  	```
 
 - Struct
 
-  ```go
+  	```go
 	type Todos struct {
 		Id     string `json:"id"`
 		Title  string `json:"title"`
 		IsDone bool   `isDone:"isDone"`
 	}
-  ```
+  	```
 
 - Dummy Data
 
-  ```go
+  	```go
 	var todos = []Todos{
 	{
 		Id:     "1",
@@ -49,11 +49,11 @@ Routing in `labstack/echo` is pretty straightforward. Make sure you already unde
 		IsDone: false,
 	},
 	}
-  ```
+  	```
 
 - Main function for Declare Route
 
-  ```go
+  	```go
 	func main() {
 		e := echo.New()
 
@@ -66,21 +66,21 @@ Routing in `labstack/echo` is pretty straightforward. Make sure you already unde
 		fmt.Println("server running localhost:5000")
 		e.Logger.Fatal(e.Start("localhost:5000"))
 	}
-  ```
+ 	 ```
 
 - Get all Todo data
 
-  ```go
+  	```go
 	func FindTodos(c echo.Context) error {
 		c.Response().Header().Set("Content-Type", "application/json")
 		c.Response().WriteHeader(http.StatusOK)
 		return json.NewEncoder(c.Response()).Encode(todos)
 	}
-  ```
+  	```
 
 - Get Todo data by Id
 
-  ```go
+  	```go
 	func GetTodo(c echo.Context) error {
 		c.Response().Header().Set("Content-Type", "application/json")
 		id := c.Param("id")
@@ -103,11 +103,11 @@ Routing in `labstack/echo` is pretty straightforward. Make sure you already unde
 		c.Response().WriteHeader(http.StatusOK)
 		return json.NewEncoder(c.Response()).Encode(todoData)
 	}
-  ```
+  	```
 
 - Create Todo Data
 
-  ```go
+  	```go
 	func CreateTodo(c echo.Context) error {
 		var data Todos
 
@@ -119,11 +119,11 @@ Routing in `labstack/echo` is pretty straightforward. Make sure you already unde
 		c.Response().WriteHeader(http.StatusOK)
 		return json.NewEncoder(c.Response()).Encode(todos)
 	}
-  ```
+ 	```
 
 - Update Todo Data
 
-  ```go
+  	```go
 	func UpdateTodo(c echo.Context) error {
 		id := c.Param("id")
 		var data Todos
@@ -147,11 +147,11 @@ Routing in `labstack/echo` is pretty straightforward. Make sure you already unde
 		c.Response().WriteHeader(http.StatusOK)
 		return json.NewEncoder(c.Response()).Encode(todos)
 	}
-  ```
+  	```
 
 - Delete Todo data
 
-  ```go
+  	```go
 	func DeleteTodo(c echo.Context) error {
 		id := c.Param("id")
 		var isGetTodo = false
@@ -174,4 +174,4 @@ Routing in `labstack/echo` is pretty straightforward. Make sure you already unde
 		c.Response().WriteHeader(http.StatusOK)
 		return json.NewEncoder(c.Response()).Encode(todos)
 	}
-  ```
+  	```
