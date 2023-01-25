@@ -2,7 +2,6 @@ package repositories
 
 import (
 	"dumbmerch/models"
-	"time"
 
 	"gorm.io/gorm"
 )
@@ -38,7 +37,7 @@ func (r *repository) GetUser(ID int) (models.User, error) {
 }
 
 func (r *repository) CreateUser(user models.User) (models.User, error) {
-	err := r.db.Exec("INSERT INTO users(name,email,password,created_at,updated_at) VALUES (?,?,?,?,?)", user.Name, user.Email, user.Password, time.Now(), time.Now()).Error
+	err := r.db.Create(&user).Error
 
 	return user, err
 }
