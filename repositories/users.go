@@ -49,7 +49,7 @@ func (r *repository) UpdateUser(user models.User) (models.User, error) {
 }
 
 func (r *repository) DeleteUser(user models.User, ID int) (models.User, error) {
-	err := r.db.Raw("DELETE FROM users WHERE id=?", ID).Scan(&user).Error
+	err := r.db.Delete(&user, ID).Scan(&user).Error
 
 	return user, err
 }
