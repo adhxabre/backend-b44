@@ -92,7 +92,7 @@ func (h *handler) UpdateUser(c echo.Context) error {
 		user.Password = request.Password
 	}
 
-	data, err := h.UserRepository.UpdateUser(user, id)
+	data, err := h.UserRepository.UpdateUser(user)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, dto.ErrorResult{Code: http.StatusInternalServerError, Message: err.Error()})
 	}
