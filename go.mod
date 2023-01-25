@@ -1,4 +1,4 @@
-module fundamental-golang-result-new
+module dumbmerch
 
 go 1.19
 
