@@ -24,7 +24,7 @@ Group Routes are needed in API development to differentiate a route for API or f
 
   > File: `routes/todo.go`
 
-  ```go
+  	```go
 	package routes
 
 	import (
@@ -40,11 +40,11 @@ Group Routes are needed in API development to differentiate a route for API or f
 		e.PATCH("/todo/:id", handlers.UpdateTodo)
 		e.DELETE("/todo/:id", handlers.DeleteTodo)
 	}
-  ```
+  	```
 
 - On `handlers/todo.go` file, declare `struct`, `dummy data`, and the handlers function
 
-  ```go
+  	```go
 	package handlers
 
 	import (
@@ -72,19 +72,19 @@ Group Routes are needed in API development to differentiate a route for API or f
 			IsDone: false,
 		},
 	}
-  ```
+ 	```
 
-  ```go
-  // Get All Todo
+  	```go
+  	// Get All Todo
 	func FindTodos(c echo.Context) error {
 		c.Response().Header().Set("Content-Type", "application/json")
 		c.Response().WriteHeader(http.StatusOK)
 		return json.NewEncoder(c.Response()).Encode(todos)
 	}
-  ```
+  	```
 
-  ```go
-  // Get Todo by Id
+  	```go
+  	// Get Todo by Id
 	func GetTodo(c echo.Context) error {
 		c.Response().Header().Set("Content-Type", "application/json")
 		id := c.Param("id")
@@ -107,10 +107,10 @@ Group Routes are needed in API development to differentiate a route for API or f
 		c.Response().WriteHeader(http.StatusOK)
 		return json.NewEncoder(c.Response()).Encode(todoData)
 	}
-  ```
+  	```
 
-  ```go
-  // Create Todo
+  	```go
+  	// Create Todo
 	func CreateTodo(c echo.Context) error {
 		var data Todos
 
@@ -122,10 +122,10 @@ Group Routes are needed in API development to differentiate a route for API or f
 		c.Response().WriteHeader(http.StatusOK)
 		return json.NewEncoder(c.Response()).Encode(todos)
 	}
-  ```
+  	```
 
-  ```go
-  // Update Todo
+  	```go
+ 	// Update Todo
 	func UpdateTodo(c echo.Context) error {
 		id := c.Param("id")
 		var data Todos
@@ -149,10 +149,10 @@ Group Routes are needed in API development to differentiate a route for API or f
 		c.Response().WriteHeader(http.StatusOK)
 		return json.NewEncoder(c.Response()).Encode(todos)
 	}
-  ```
+  	```
 
-  ```go
-  // Delete Todo
+  	```go
+  	// Delete Todo
 	func DeleteTodo(c echo.Context) error {
 		id := c.Param("id")
 		var isGetTodo = false
@@ -175,11 +175,11 @@ Group Routes are needed in API development to differentiate a route for API or f
 		c.Response().WriteHeader(http.StatusOK)
 		return json.NewEncoder(c.Response()).Encode(todos)
 	}
-  ```
+  	```
   
 - On `main.go` it become like this (we add e.Group("api/v1") to make versioning of our API) : 
 
-  ```go
+  	```go
 	package main
 
 	import (
@@ -197,4 +197,4 @@ Group Routes are needed in API development to differentiate a route for API or f
 		fmt.Println("server running localhost:5000")
 		e.Logger.Fatal(e.Start("localhost:5000"))
 	}
-  ```
+  	```
