@@ -176,3 +176,25 @@ Group Routes are needed in API development to differentiate a route for API or f
 		return json.NewEncoder(c.Response()).Encode(todos)
 	}
   ```
+  
+- On `main.go` it become like this (we add e.Group("api/v1") to make versioning of our API) : 
+
+  ```go
+	package main
+
+	import (
+		"fmt"
+		"fundamental-golang-result-new/routes"
+
+		"github.com/labstack/echo"
+	)
+
+	func main() {
+		e := echo.New()
+
+		routes.RouteInit(e.Group("/api/v1"))
+
+		fmt.Println("server running localhost:5000")
+		e.Logger.Fatal(e.Start("localhost:5000"))
+	}
+  ```
