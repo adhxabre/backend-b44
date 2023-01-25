@@ -10,7 +10,7 @@ Group Routes are needed in API development to differentiate a route for API or f
 
 - On `routes/routes.go` file, declare Grouping Function for all Route
 
-  ```go
+  	```go
 	package routes
 
 	import "github.com/labstack/echo"
@@ -18,7 +18,7 @@ Group Routes are needed in API development to differentiate a route for API or f
 	func RouteInit(e *echo.Group) {
 		TodoRoutes(e)
 	}
-  ```
+  	```
 
 - On `routes/todo.go` file, declare route and handler
 
