@@ -32,11 +32,11 @@ For this section, example Belongs To relation:
     dto "dumbmerch/dto/result"
     "dumbmerch/models"
     "dumbmerch/repositories"
-    "encoding/json"
+
     "net/http"
     "strconv"
 
-    "github.com/gorilla/mux"
+    "github.com/labstack/echo"
   )
 
   type handlerProfile struct {
@@ -47,23 +47,16 @@ For this section, example Belongs To relation:
     return &handlerProfile{ProfileRepository}
   }
 
-  func (h *handlerProfile) GetProfile(w http.ResponseWriter, r *http.Request) {
-    w.Header().Set("Content-Type", "application/json")
-
-    id, _ := strconv.Atoi(mux.Vars(r)["id"])
+  func (h *handlerProfile) GetProfile(c echo.Context) error {
+    id, _ := strconv.Atoi(c.Param("id"))
 
     var profile models.Profile
     profile, err := h.ProfileRepository.GetProfile(id)
     if err != nil {
-      w.WriteHeader(http.StatusInternalServerError)
-      response := dto.ErrorResult{Code: http.StatusBadRequest, Message: err.Error()}
-      json.NewEncoder(w).Encode(response)
-      return
+      return c.JSON(http.StatusBadRequest, dto.ErrorResult{Code: http.StatusBadRequest, Message: err.Error()})
     }
 
-    w.WriteHeader(http.StatusOK)
-    response := dto.SuccessResult{Code: http.StatusOK, Data: convertResponseProfile(profile)}
-    json.NewEncoder(w).Encode(response)
+    return c.JSON(http.StatusOK, dto.SuccessResult{Code: http.StatusOK, Data: convertResponseProfile(profile)})
   }
 
   func convertResponseProfile(u models.Profile) profiledto.ProfileResponse {
@@ -90,12 +83,11 @@ For this section, example Belongs To relation:
     dto "dumbmerch/dto/result"
     "dumbmerch/models"
     "dumbmerch/repositories"
-    "encoding/json"
     "net/http"
     "strconv"
 
     "github.com/go-playground/validator/v10"
-    "github.com/gorilla/mux"
+    "github.com/labstack/echo"
   )
 
   type handlerProduct struct {
@@ -106,59 +98,37 @@ For this section, example Belongs To relation:
     return &handlerProduct{ProductRepository}
   }
 
-  func (h *handlerProduct) FindProducts(w http.ResponseWriter, r *http.Request) {
-    w.Header().Set("Content-Type", "application/json")
-
+  func (h *handlerProduct) FindProducts(c echo.Context) error {
     products, err := h.ProductRepository.FindProducts()
     if err != nil {
-      w.WriteHeader(http.StatusInternalServerError)
-      response := dto.ErrorResult{Code: http.StatusBadRequest, Message: err.Error()}
-      json.NewEncoder(w).Encode(response)
-      return
+      return c.JSON(http.StatusInternalServerError, dto.ErrorResult{Code: http.StatusBadRequest, Message: err.Error()})
     }
 
-    w.WriteHeader(http.StatusOK)
-    response := dto.SuccessResult{Code: http.StatusOK, Data: products}
-    json.NewEncoder(w).Encode(response)
+    return c.JSON(http.StatusOK, dto.SuccessResult{Code: http.StatusOK, Data: products})
   }
 
-  func (h *handlerProduct) GetProduct(w http.ResponseWriter, r *http.Request) {
-    w.Header().Set("Content-Type", "application/json")
-
-    id, _ := strconv.Atoi(mux.Vars(r)["id"])
+  func (h *handlerProduct) GetProduct(c echo.Context) error {
+    id, _ := strconv.Atoi(c.Param("id"))
 
     var product models.Product
     product, err := h.ProductRepository.GetProduct(id)
     if err != nil {
-      w.WriteHeader(http.StatusInternalServerError)
-      response := dto.ErrorResult{Code: http.StatusBadRequest, Message: err.Error()}
-      json.NewEncoder(w).Encode(response)
-      return
+      return c.JSON(http.StatusInternalServerError, dto.ErrorResult{Code: http.StatusBadRequest, Message: err.Error()})
     }
 
-    w.WriteHeader(http.StatusOK)
-    response := dto.SuccessResult{Code: http.StatusOK, Data: convertResponseProduct(product)}
-    json.NewEncoder(w).Encode(response)
+    return c.JSON(http.StatusOK, dto.SuccessResult{Code: http.StatusOK, Data: convertResponseProduct(product)})
   }
 
-  func (h *handlerProduct) CreateProduct(w http.ResponseWriter, r *http.Request) {
-    w.Header().Set("Content-Type", "application/json")
-
+  func (h *handlerProduct) CreateProduct(c echo.Context) error {
     request := new(productdto.ProductRequest)
-    if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
-      w.WriteHeader(http.StatusBadRequest)
-      response := dto.ErrorResult{Code: http.StatusBadRequest, Message: err.Error()}
-      json.NewEncoder(w).Encode(response)
-      return
+    if err := c.Bind(request); err != nil {
+      return c.JSON(http.StatusBadRequest, dto.ErrorResult{Code: http.StatusBadRequest, Message: err.Error()})
     }
 
     validation := validator.New()
     err := validation.Struct(request)
     if err != nil {
-      w.WriteHeader(http.StatusInternalServerError)
-      response := dto.ErrorResult{Code: http.StatusInternalServerError, Message: err.Error()}
-      json.NewEncoder(w).Encode(response)
-      return
+      return c.JSON(http.StatusInternalServerError, dto.ErrorResult{Code: http.StatusInternalServerError, Message: err.Error()})
     }
 
     product := models.Product{
@@ -172,17 +142,12 @@ For this section, example Belongs To relation:
 
     product, err = h.ProductRepository.CreateProduct(product)
     if err != nil {
-      w.WriteHeader(http.StatusInternalServerError)
-      response := dto.ErrorResult{Code: http.StatusInternalServerError, Message: err.Error()}
-      json.NewEncoder(w).Encode(response)
-      return
+      return c.JSON(http.StatusInternalServerError, dto.ErrorResult{Code: http.StatusInternalServerError, Message: err.Error()})
     }
 
     product, _ = h.ProductRepository.GetProduct(product.ID)
 
-    w.WriteHeader(http.StatusOK)
-    response := dto.SuccessResult{Code: http.StatusOK, Data: product}
-    json.NewEncoder(w).Encode(response)
+    return c.JSON(http.StatusOK, dto.SuccessResult{Code: http.StatusOK, Data: convertResponseProduct(product)})
   }
 
   func convertResponseProduct(u models.Product) models.ProductResponse {
@@ -288,14 +253,14 @@ For this section, example Belongs To relation:
     "dumbmerch/pkg/mysql"
     "dumbmerch/repositories"
 
-    "github.com/gorilla/mux"
+    "github.com/labstack/echo"
   )
 
-  func ProfileRoutes(r *mux.Router) {
+  func ProfileRoutes(e *echo.Group) {
     profileRepository := repositories.RepositoryProfile(mysql.DB)
     h := handlers.HandlerProfile(profileRepository)
 
-    r.HandleFunc("/profile/{id}", h.GetProfile).Methods("GET")
+    e.GET("/profile/:id", h.GetProfile)
   }
   ```
 
@@ -311,16 +276,16 @@ For this section, example Belongs To relation:
     "dumbmerch/pkg/mysql"
     "dumbmerch/repositories"
 
-    "github.com/gorilla/mux"
+    "github.com/labstack/echo"
   )
 
-  func ProductRoutes(r *mux.Router) {
+  func ProductRoutes(e *echo.Group) {
     productRepository := repositories.RepositoryProduct(mysql.DB)
     h := handlers.HandlerProduct(productRepository)
 
-    r.HandleFunc("/products", h.FindProducts).Methods("GET")
-    r.HandleFunc("/product/{id}", h.GetProduct).Methods("GET")
-    r.HandleFunc("/product", h.CreateProduct).Methods("POST")
+    e.GET("/products", h.FindProducts)
+    e.GET("/product/:id", h.GetProduct)
+    e.POST("/product", h.CreateProduct)
   }
   ```
 
@@ -331,13 +296,11 @@ For this section, example Belongs To relation:
   ```go
   package routes
 
-  import (
-    "github.com/gorilla/mux"
-  )
+  import "github.com/labstack/echo"
 
-  func RouteInit(r *mux.Router) {
-    UserRoutes(r)
-    ProfileRoutes(r) // Add this code
-    ProductRoutes(r) // Add this code
+  func RouteInit(e *echo.Group) {
+    UserRoutes(e)
+    ProfileRoutes(e)
+    ProductRoutes(e)
   }
   ```
