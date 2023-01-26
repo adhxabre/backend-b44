@@ -15,5 +15,5 @@ func ProductRoutes(e *echo.Group) {
 
 	e.GET("/products", middleware.Auth(h.FindProducts))
 	e.GET("/product/:id", middleware.Auth(h.GetProduct))
-	e.POST("/product", middleware.Auth(h.CreateProduct))
+	e.POST("/product", middleware.Auth(middleware.UploadFile(h.CreateProduct)))
 }

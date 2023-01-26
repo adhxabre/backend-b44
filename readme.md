@@ -1,196 +1,122 @@
 ### Table of Contents
 
-- [Authentication JWT](#authentication-jwt)
+- [Handle Upload File](#handle-upload-file)
   - [Introduction](#introduction)
-  - [Installation](#installation)
   - [Package](#Package)
-  - [Handler](#Handler)
-  - [Repository](#repository)
   - [Routes](#routes)
+  - [Handler](#Handler)
+  - [Folder Store File](#folder-store-file)
+  - [DotEnv](#dotenv)
 
 ---
 
-# Authentication JWT
-
-Reference: [Golang JWT](https://github.com/golang-jwt/jwt)
+# Handle Upload File
 
 ## Introduction
 
 For this section:
 
-- Generate Token using JWT if `User Login`
-- Verify Token and Get User Data if `Create Product Data`
-
-## Installation
-
-- Golang Json Web Token (JWT)
-
-  ```bash
-  go get -u github.com/golang-jwt/jwt/v4
-  ```
+- Handle File Upload for `Create Product` data
 
 ## Package
 
-- Inside `pkg` folder, create `jwt` folder, inside it create `jwt.go` file, and write this below code
+- Inside `pkg` folder, in `middleware` folder, inside it create `uploadFile.go` file, and write this below code
 
-  > File: `pkg/jwt/jwt.go`
-
-  ```go
-  package jwtToken
-
-  import (
-    "fmt"
-
-    "github.com/golang-jwt/jwt/v4"
-  )
-
-  var SecretKey = "SECRET_KEY"
-
-  func GenerateToken(claims *jwt.MapClaims) (string, error) {
-    token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-    webtoken, err := token.SignedString([]byte(SecretKey))
-    if err != nil {
-      return "", err
-    }
-
-    return webtoken, nil
-  }
-
-  func VerifyToken(tokenString string) (*jwt.Token, error) {
-    token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-      if _, isValid := token.Method.(*jwt.SigningMethodHMAC); !isValid {
-        return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
-      }
-      return []byte(SecretKey), nil
-    })
-
-    if err != nil {
-      return nil, err
-    }
-    return token, nil
-  }
-
-  func DecodeToken(tokenString string) (jwt.MapClaims, error) {
-    token, err := VerifyToken(tokenString)
-    if err != nil {
-      return nil, err
-    }
-
-    claims, isOk := token.Claims.(jwt.MapClaims)
-    if isOk && token.Valid {
-      return claims, nil
-    }
-
-    return nil, fmt.Errorf("invalid token")
-  }
-  ```
-
-- Inside `pkg` folder, create `middleware` folder, inside it create `auth.go` file, and write this below code
-
-  > File: `pkg/middleware/auth.go`
+  > File: `pkg/middleware/upload_file.go`
 
   ```go
   package middleware
 
   import (
-    dto "dumbmerch/dto/result"
-    jwtToken "dumbmerch/pkg/jwt"
+    "io"
+    "io/ioutil"
     "net/http"
-    "strings"
 
     "github.com/labstack/echo"
   )
 
-  // Declare Result struct here ...
-  type Result struct {
-    Code    int         `json:"code"`
-    Data    interface{} `json:"data"`
-    Message string      `json:"message"`
-  }
-
-  // Create Auth function here ...
-  func Auth(next echo.HandlerFunc) echo.HandlerFunc {
+  func UploadFile(next echo.HandlerFunc) echo.HandlerFunc {
     return func(c echo.Context) error {
-      token := c.Request().Header.Get("Authorization")
-
-      if token == "" {
-        return c.JSON(http.StatusUnauthorized, dto.ErrorResult{Code: http.StatusBadRequest, Message: "unauthorized"})
-      }
-
-      token = strings.Split(token, " ")[1]
-      claims, err := jwtToken.DecodeToken(token)
-
+      file, err := c.FormFile("image")
       if err != nil {
-        return c.JSON(http.StatusUnauthorized, Result{Code: http.StatusUnauthorized, Message: "unathorized"})
+        return c.JSON(http.StatusBadRequest, err)
       }
 
-      c.Set("userLogin", claims)
+      src, err := file.Open()
+      if err != nil {
+        return c.JSON(http.StatusBadRequest, err)
+      }
+      defer src.Close()
+
+      tempFile, err := ioutil.TempFile("uploads", "image-*.png")
+      if err != nil {
+        return c.JSON(http.StatusBadRequest, err)
+      }
+      defer tempFile.Close()
+
+      if _, err = io.Copy(tempFile, src); err != nil {
+        return c.JSON(http.StatusBadRequest, err)
+      }
+
+      data := tempFile.Name()
+      filename := data[8:] // split uploads/
+
+      c.Set("dataFile", filename)
       return next(c)
     }
   }
   ```
 
-## Handler
+## Routes
 
-- Inside `handlers` folder, On `auth.go` file and write `Login` Function like this below code
+- In `routes` folder, inside `product.go` file, write `uploadFile` middleware on `/product` route
 
-  > File: `handlers/auth.go`
+  > File: `routes/product.go`
 
   ```go
-  func (h *handlerAuth) Login(c echo.Context) error {
-    request := new(authdto.LoginRequest)
-    if err := c.Bind(request); err != nil {
-      return c.JSON(http.StatusBadRequest, dto.ErrorResult{Code: http.StatusBadRequest, Message: err.Error()})
-    }
+  package routes
 
-    user := models.User{
-      Email:    request.Email,
-      Password: request.Password,
-    }
+  import (
+    "dumbmerch/handlers"
+    "dumbmerch/pkg/middleware"
+    "dumbmerch/pkg/mysql"
+    "dumbmerch/repositories"
 
-    // Check email
-    user, err := h.AuthRepository.Login(user.Email)
-    if err != nil {
-      return c.JSON(http.StatusBadRequest, dto.ErrorResult{Code: http.StatusBadRequest, Message: err.Error()})
-    }
+    "github.com/labstack/echo"
+  )
 
-    // Check password
-    isValid := bcrypt.CheckPasswordHash(request.Password, user.Password)
-    if !isValid {
-      return c.JSON(http.StatusBadRequest, dto.ErrorResult{Code: http.StatusBadRequest, Message: "wrong email or password"})
-    }
+  func ProductRoutes(e *echo.Group) {
+    productRepository := repositories.RepositoryProduct(mysql.DB)
+    h := handlers.HandlerProduct(productRepository)
 
-    //generate token
-    claims := jwt.MapClaims{}
-    claims["id"] = user.ID
-    claims["exp"] = time.Now().Add(time.Hour * 2).Unix() // 2 hours expired
-
-    token, errGenerateToken := jwtToken.GenerateToken(&claims)
-    if errGenerateToken != nil {
-      log.Println(errGenerateToken)
-      return echo.NewHTTPError(http.StatusUnauthorized)
-    }
-
-    loginResponse := authdto.LoginResponse{
-      Name:     user.Name,
-      Email:    user.Email,
-      Password: user.Password,
-      Token:    token,
-    }
-
-    return c.JSON(http.StatusOK, dto.SuccessResult{Code: http.StatusOK, Data: loginResponse})
+    e.GET("/products", middleware.Auth(h.FindProducts))
+    e.GET("/product/:id", middleware.Auth(h.GetProduct))
+    e.POST("/product", middleware.Auth(middleware.UploadFile(h.CreateProduct)))
   }
   ```
 
-  - Inside `handlers` folder, On `product.go` file and write `CreateProduct` Function like this below code
+## Handler
+
+- In `handlers` folder, inside `product.go` file, write get `filename` and store like this below code
 
   > File: `handlers/product.go`
 
   ```go
   func (h *handlerProduct) CreateProduct(c echo.Context) error {
-    request := new(productdto.ProductRequest)
-    if err := c.Bind(request); err != nil {
-      return c.JSON(http.StatusBadRequest, dto.ErrorResult{Code: http.StatusBadRequest, Message: err.Error()})
+    dataFile := c.Get("dataFile").(string)
+    fmt.Println("this is data file", dataFile)
+
+    price, _ := strconv.Atoi(c.FormValue("price"))
+    qty, _ := strconv.Atoi(c.FormValue("qty"))
+    category_id, _ := strconv.Atoi(c.FormValue("category_id"))
+
+    request := productdto.ProductRequest{
+      Name:       c.FormValue("name"),
+      Desc:       c.FormValue("desc"),
+      Price:      price,
+      Image:      dataFile,
+      Qty:        qty,
+      CategoryID: category_id,
     }
 
     validation := validator.New()
@@ -222,69 +148,115 @@ For this section:
   }
   ```
 
-## Repository
+- Embed Path file in `FindProducts` and `GetProduct` method
+  > File: `handlers/product.go`
+  - Create `path_file` Global variable
+    ```go
+    var path_file = "http://localhost:5000/uploads/"
+    ```
+  - `FindProducts` method
+    ```go
+    for i, p := range products {
+      products[i].Image = path_file + p.Image
+    }
+    ```
+  - `GetProduct` method
+    ```go
+    product.Image = path_file + product.Image
+    ```
 
-- Inside `repositories` folder, On `auth.go` file, write `Login` function like this below code
+## Folder Store File
 
-  > File: `repositories/auth.go`
+- Create `uploads` folder
+
+  > File: `./uploads`
+
+- Add this below code to make `uploads` can be used another client
+
+  > File: `main.go`
 
   ```go
-  func (r *repository) Login(email string) (models.User, error) {
-    var user models.User
-    err := r.db.First(&user, "email=?", email).Error
-
-    return user, err
-  }
-  ```
-
-## Routes
-
-- Inside `routes` folder, in `auth.go` file and write `Login` route this below code
-
-  > File: `routes/auth.go`
-
-  ```go
-  package routes
+  package main
 
   import (
-    "dumbmerch/handlers"
+    "dumbmerch/database"
     "dumbmerch/pkg/mysql"
-    "dumbmerch/repositories"
+    "dumbmerch/routes"
+    "fmt"
 
     "github.com/labstack/echo"
   )
 
-  func AuthRoutes(e *echo.Group) {
-    authRepository := repositories.RepositoryAuth(mysql.DB)
-    h := handlers.HandlerAuth(authRepository)
+  func main() {
+    e := echo.New()
 
-    e.POST("/register", h.Register)
-    e.POST("/login", h.Login) // add this code
+    mysql.DatabaseInit()
+    database.RunMigration()
+
+    routes.RouteInit(e.Group("/api/v1"))
+
+    e.Static("/uploads", "./uploads")
+
+    fmt.Println("server running localhost:5000")
+    e.Logger.Fatal(e.Start("localhost:5000"))
   }
   ```
 
-- Inside `routes` folder, in `product.go` file and write `product` route with `middleware` like this below code
+## DotEnv
 
-  > File: `routes/product.go`
+- Installation
 
-  ```go
-  package routes
-
-  import (
-    "dumbmerch/handlers"
-    "dumbmerch/pkg/middleware"
-    "dumbmerch/pkg/mysql"
-    "dumbmerch/repositories"
-
-    "github.com/labstack/echo"
-  )
-
-  func ProductRoutes(e *echo.Group) {
-    productRepository := repositories.RepositoryProduct(mysql.DB)
-    h := handlers.HandlerProduct(productRepository)
-
-    e.GET("/products", middleware.Auth(h.FindProducts))
-    e.GET("/product/:id", middleware.Auth(h.GetProduct))
-    e.POST("/product", middleware.Auth(h.CreateProduct))
-  }
+  ```bash
+  go get github.com/joho/godotenv
   ```
+
+- Create `.env` file and write this below code
+
+  > File: `.env`
+
+  ```env
+  SECRET_KEY=suryaganteng
+  ```
+
+- In `main.go` file import `godotenv` and Init `godotenv` inside `main` function like this below code
+
+  > File: `main.go`
+
+  - Import `godotenv` package
+    ```go
+    import (
+      // another package here ...
+      "github.com/joho/godotenv" // import this package
+    )
+    ```
+  - Init `godotenv`
+
+    ```go
+    func main() {
+
+      	// env
+        errEnv := godotenv.Load()
+        if errEnv != nil {
+          panic("Failed to load env file")
+        }
+
+        // Another code on this below ...
+    }
+    ```
+
+- How to use Environment Variable, write this below code inside `jwt.go` file
+
+  > File: `pkg/jwt/jwt.go`
+
+  - Import `os` package
+    ```go
+    import (
+      "fmt"
+      "os" // import this package
+      "github.com/golang-jwt/jwt/v4"
+    )
+    ```
+  - Modify `SecretKey` variable like this below code
+    ```go
+    var SecretKey = os.Getenv("SECRET_KEY")
+    ```
