@@ -6,6 +6,5 @@ type ProductRequest struct {
 	Price      int    `json:"price" form:"price" validate:"required"`
 	Image      string `json:"image" form:"image" validate:"required"`
 	Qty        int    `json:"qty" form:"qty" validate:"required"`
-	UserID     int    `json:"user_id" validate:"required"`
 	CategoryID int    `json:"category_id" form:"category_id" validate:"required"`
 }

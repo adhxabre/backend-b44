@@ -1,7 +1,8 @@
 ### Table of Contents
 
-- [Hashing Password](#hashing-password)
-  - [Introduction](#intoduction)
+- [Authentication JWT](#authentication-jwt)
+  - [Introduction](#introduction)
+  - [Installation](#installation)
   - [Package](#Package)
   - [Handler](#Handler)
   - [Repository](#repository)
@@ -9,71 +10,185 @@
 
 ---
 
-# Hashing Password
+# Authentication JWT
 
-Reference: [Go Bcrypt](https://pkg.go.dev/golang.org/x/crypto/bcrypt)
+Reference: [Golang JWT](https://github.com/golang-jwt/jwt)
 
 ## Introduction
 
-For this section, Hashing password if User doing Register New Account
+For this section:
+
+- Generate Token using JWT if `User Login`
+- Verify Token and Get User Data if `Create Product Data`
+
+## Installation
+
+- Golang Json Web Token (JWT)
+
+  ```bash
+  go get -u github.com/golang-jwt/jwt/v4
+  ```
 
 ## Package
 
-- Inside `pkg` folder, create `bcrypt` folder, inside it create `hash_password.go` file, and write this below code
+- Inside `pkg` folder, create `jwt` folder, inside it create `jwt.go` file, and write this below code
 
-  > File: `pkg/bcrypt/hash_password.go`
+  > File: `pkg/jwt/jwt.go`
 
   ```go
-  package bcrypt
+  package jwtToken
 
-  import "golang.org/x/crypto/bcrypt"
+  import (
+    "fmt"
 
-  func HashingPassword(password string) (string, error) {
-    hashedByte, err := bcrypt.GenerateFromPassword([]byte(password), 10)
+    "github.com/golang-jwt/jwt/v4"
+  )
+
+  var SecretKey = "SECRET_KEY"
+
+  func GenerateToken(claims *jwt.MapClaims) (string, error) {
+    token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+    webtoken, err := token.SignedString([]byte(SecretKey))
     if err != nil {
       return "", err
     }
-    return string(hashedByte), nil
+
+    return webtoken, nil
   }
 
-  func CheckPasswordHash(password, hashedPassword string) bool {
-    err := bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(password))
-    return err == nil
+  func VerifyToken(tokenString string) (*jwt.Token, error) {
+    token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+      if _, isValid := token.Method.(*jwt.SigningMethodHMAC); !isValid {
+        return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+      }
+      return []byte(SecretKey), nil
+    })
+
+    if err != nil {
+      return nil, err
+    }
+    return token, nil
+  }
+
+  func DecodeToken(tokenString string) (jwt.MapClaims, error) {
+    token, err := VerifyToken(tokenString)
+    if err != nil {
+      return nil, err
+    }
+
+    claims, isOk := token.Claims.(jwt.MapClaims)
+    if isOk && token.Valid {
+      return claims, nil
+    }
+
+    return nil, fmt.Errorf("invalid token")
+  }
+  ```
+
+- Inside `pkg` folder, create `middleware` folder, inside it create `auth.go` file, and write this below code
+
+  > File: `pkg/middleware/auth.go`
+
+  ```go
+  package middleware
+
+  import (
+    dto "dumbmerch/dto/result"
+    jwtToken "dumbmerch/pkg/jwt"
+    "net/http"
+    "strings"
+
+    "github.com/labstack/echo"
+  )
+
+  // Declare Result struct here ...
+  type Result struct {
+    Code    int         `json:"code"`
+    Data    interface{} `json:"data"`
+    Message string      `json:"message"`
+  }
+
+  // Create Auth function here ...
+  func Auth(next echo.HandlerFunc) echo.HandlerFunc {
+    return func(c echo.Context) error {
+      token := c.Request().Header.Get("Authorization")
+
+      if token == "" {
+        return c.JSON(http.StatusUnauthorized, dto.ErrorResult{Code: http.StatusBadRequest, Message: "unauthorized"})
+      }
+
+      token = strings.Split(token, " ")[1]
+      claims, err := jwtToken.DecodeToken(token)
+
+      if err != nil {
+        return c.JSON(http.StatusUnauthorized, Result{Code: http.StatusUnauthorized, Message: "unathorized"})
+      }
+
+      c.Set("userLogin", claims)
+      return next(c)
+    }
   }
   ```
 
 ## Handler
 
-- Inside `handlers` folder, create `auth.go` file and write this below code
+- Inside `handlers` folder, On `auth.go` file and write `Login` Function like this below code
 
   > File: `handlers/auth.go`
 
   ```go
-  package handlers
+  func (h *handlerAuth) Login(c echo.Context) error {
+    request := new(authdto.LoginRequest)
+    if err := c.Bind(request); err != nil {
+      return c.JSON(http.StatusBadRequest, dto.ErrorResult{Code: http.StatusBadRequest, Message: err.Error()})
+    }
 
-  import (
-    authdto "dumbmerch/dto/auth"
-    dto "dumbmerch/dto/result"
-    "net/http"
+    user := models.User{
+      Email:    request.Email,
+      Password: request.Password,
+    }
 
-    "dumbmerch/models"
-    "dumbmerch/pkg/bcrypt"
-    "dumbmerch/repositories"
+    // Check email
+    user, err := h.AuthRepository.Login(user.Email)
+    if err != nil {
+      return c.JSON(http.StatusBadRequest, dto.ErrorResult{Code: http.StatusBadRequest, Message: err.Error()})
+    }
 
-    "github.com/go-playground/validator/v10"
-    "github.com/labstack/echo"
-  )
+    // Check password
+    isValid := bcrypt.CheckPasswordHash(request.Password, user.Password)
+    if !isValid {
+      return c.JSON(http.StatusBadRequest, dto.ErrorResult{Code: http.StatusBadRequest, Message: "wrong email or password"})
+    }
 
-  type handlerAuth struct {
-    AuthRepository repositories.AuthRepository
+    //generate token
+    claims := jwt.MapClaims{}
+    claims["id"] = user.ID
+    claims["exp"] = time.Now().Add(time.Hour * 2).Unix() // 2 hours expired
+
+    token, errGenerateToken := jwtToken.GenerateToken(&claims)
+    if errGenerateToken != nil {
+      log.Println(errGenerateToken)
+      return echo.NewHTTPError(http.StatusUnauthorized)
+    }
+
+    loginResponse := authdto.LoginResponse{
+      Name:     user.Name,
+      Email:    user.Email,
+      Password: user.Password,
+      Token:    token,
+    }
+
+    return c.JSON(http.StatusOK, dto.SuccessResult{Code: http.StatusOK, Data: loginResponse})
   }
+  ```
 
-  func HandlerAuth(AuthRepository repositories.AuthRepository) *handlerAuth {
-    return &handlerAuth{AuthRepository}
-  }
+  - Inside `handlers` folder, On `product.go` file and write `CreateProduct` Function like this below code
 
-  func (h *handlerAuth) Register(c echo.Context) error {
-    request := new(authdto.AuthRequest)
+  > File: `handlers/product.go`
+
+  ```go
+  func (h *handlerProduct) CreateProduct(c echo.Context) error {
+    request := new(productdto.ProductRequest)
     if err := c.Bind(request); err != nil {
       return c.JSON(http.StatusBadRequest, dto.ErrorResult{Code: http.StatusBadRequest, Message: err.Error()})
     }
@@ -81,54 +196,42 @@ For this section, Hashing password if User doing Register New Account
     validation := validator.New()
     err := validation.Struct(request)
     if err != nil {
-      return c.JSON(http.StatusBadRequest, dto.ErrorResult{Code: http.StatusBadRequest, Message: err.Error()})
+      return c.JSON(http.StatusInternalServerError, dto.ErrorResult{Code: http.StatusInternalServerError, Message: err.Error()})
     }
 
-    password, err := bcrypt.HashingPassword(request.Password)
-    if err != nil {
-      return c.JSON(http.StatusBadRequest, dto.ErrorResult{Code: http.StatusBadRequest, Message: err.Error()})
+    userLogin := c.Get("userLogin")
+    userId := userLogin.(jwt.MapClaims)["id"].(float64)
+
+    product := models.Product{
+      Name:   request.Name,
+      Desc:   request.Desc,
+      Price:  request.Price,
+      Image:  request.Image,
+      Qty:    request.Qty,
+      UserID: int(userId),
     }
 
-    user := models.User{
-      Name:     request.Name,
-      Email:    request.Email,
-      Password: password,
-    }
-
-    data, err := h.AuthRepository.Register(user)
+    product, err = h.ProductRepository.CreateProduct(product)
     if err != nil {
       return c.JSON(http.StatusInternalServerError, dto.ErrorResult{Code: http.StatusInternalServerError, Message: err.Error()})
     }
 
-    return c.JSON(http.StatusOK, dto.SuccessResult{Code: http.StatusOK, Data: data})
+    product, _ = h.ProductRepository.GetProduct(product.ID)
+
+    return c.JSON(http.StatusOK, dto.SuccessResult{Code: http.StatusOK, Data: convertResponseProduct(product)})
   }
   ```
 
 ## Repository
 
-- Inside `repositories` folder, create `auth.go` file and write this below code
+- Inside `repositories` folder, On `auth.go` file, write `Login` function like this below code
 
   > File: `repositories/auth.go`
 
   ```go
-  package repositories
-
-  import (
-    "dumbmerch/models"
-
-    "gorm.io/gorm"
-  )
-
-  type AuthRepository interface {
-    Register(user models.User) (models.User, error)
-  }
-
-  func RepositoryAuth(db *gorm.DB) *repository {
-    return &repository{db}
-  }
-
-  func (r *repository) Register(user models.User) (models.User, error) {
-    err := r.db.Create(&user).Error
+  func (r *repository) Login(email string) (models.User, error) {
+    var user models.User
+    err := r.db.First(&user, "email=?", email).Error
 
     return user, err
   }
@@ -136,7 +239,7 @@ For this section, Hashing password if User doing Register New Account
 
 ## Routes
 
-- Inside `routes` folder, create `auth.go` file and write this below code
+- Inside `routes` folder, in `auth.go` file and write `Login` route this below code
 
   > File: `routes/auth.go`
 
@@ -156,5 +259,32 @@ For this section, Hashing password if User doing Register New Account
     h := handlers.HandlerAuth(authRepository)
 
     e.POST("/register", h.Register)
+    e.POST("/login", h.Login) // add this code
+  }
+  ```
+
+- Inside `routes` folder, in `product.go` file and write `product` route with `middleware` like this below code
+
+  > File: `routes/product.go`
+
+  ```go
+  package routes
+
+  import (
+    "dumbmerch/handlers"
+    "dumbmerch/pkg/middleware"
+    "dumbmerch/pkg/mysql"
+    "dumbmerch/repositories"
+
+    "github.com/labstack/echo"
+  )
+
+  func ProductRoutes(e *echo.Group) {
+    productRepository := repositories.RepositoryProduct(mysql.DB)
+    h := handlers.HandlerProduct(productRepository)
+
+    e.GET("/products", middleware.Auth(h.FindProducts))
+    e.GET("/product/:id", middleware.Auth(h.GetProduct))
+    e.POST("/product", middleware.Auth(h.CreateProduct))
   }
   ```
