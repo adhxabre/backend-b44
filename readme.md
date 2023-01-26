@@ -98,7 +98,7 @@ For this section:
     "net/http"
     "strings"
 
-    "github.com/labstack/echo"
+    "github.com/labstack/echo/v4"
   )
 
   // Declare Result struct here ...
@@ -251,7 +251,7 @@ For this section:
     "dumbmerch/pkg/mysql"
     "dumbmerch/repositories"
 
-    "github.com/labstack/echo"
+    "github.com/labstack/echo/v4"
   )
 
   func AuthRoutes(e *echo.Group) {
@@ -276,7 +276,7 @@ For this section:
     "dumbmerch/pkg/mysql"
     "dumbmerch/repositories"
 
-    "github.com/labstack/echo"
+    "github.com/labstack/echo/v4"
   )
 
   func ProductRoutes(e *echo.Group) {
