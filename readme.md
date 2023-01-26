@@ -61,7 +61,7 @@ For this section, Hashing password if User doing Register New Account
     "dumbmerch/repositories"
 
     "github.com/go-playground/validator/v10"
-    "github.com/labstack/echo"
+    "github.com/labstack/echo/v4"
   )
 
   type handlerAuth struct {
@@ -148,7 +148,7 @@ For this section, Hashing password if User doing Register New Account
     "dumbmerch/pkg/mysql"
     "dumbmerch/repositories"
 
-    "github.com/labstack/echo"
+    "github.com/labstack/echo/v4"
   )
 
   func AuthRoutes(e *echo.Group) {
