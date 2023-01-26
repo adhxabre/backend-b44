@@ -36,7 +36,7 @@ For this section, example Belongs To relation:
     "net/http"
     "strconv"
 
-    "github.com/labstack/echo"
+    "github.com/labstack/echo/v4"
   )
 
   type handlerProfile struct {
@@ -87,7 +87,7 @@ For this section, example Belongs To relation:
     "strconv"
 
     "github.com/go-playground/validator/v10"
-    "github.com/labstack/echo"
+    "github.com/labstack/echo/v4"
   )
 
   type handlerProduct struct {
@@ -253,7 +253,7 @@ For this section, example Belongs To relation:
     "dumbmerch/pkg/mysql"
     "dumbmerch/repositories"
 
-    "github.com/labstack/echo"
+    "github.com/labstack/echo/v4"
   )
 
   func ProfileRoutes(e *echo.Group) {
@@ -276,7 +276,7 @@ For this section, example Belongs To relation:
     "dumbmerch/pkg/mysql"
     "dumbmerch/repositories"
 
-    "github.com/labstack/echo"
+    "github.com/labstack/echo/v4"
   )
 
   func ProductRoutes(e *echo.Group) {
@@ -296,7 +296,7 @@ For this section, example Belongs To relation:
   ```go
   package routes
 
-  import "github.com/labstack/echo"
+  import "github.com/labstack/echo/v4"
 
   func RouteInit(e *echo.Group) {
     UserRoutes(e)
