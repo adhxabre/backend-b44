@@ -32,7 +32,7 @@ For this section:
     "io/ioutil"
     "net/http"
 
-    "github.com/labstack/echo"
+    "github.com/labstack/echo/v4"
   )
 
   func UploadFile(next echo.HandlerFunc) echo.HandlerFunc {
@@ -82,7 +82,7 @@ For this section:
     "dumbmerch/pkg/mysql"
     "dumbmerch/repositories"
 
-    "github.com/labstack/echo"
+    "github.com/labstack/echo/v4"
   )
 
   func ProductRoutes(e *echo.Group) {
@@ -184,7 +184,7 @@ For this section:
     "dumbmerch/routes"
     "fmt"
 
-    "github.com/labstack/echo"
+    "github.com/labstack/echo/v4"
   )
 
   func main() {

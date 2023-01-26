@@ -5,7 +5,7 @@ import (
 	"dumbmerch/pkg/mysql"
 	"dumbmerch/repositories"
 
-	"github.com/labstack/echo"
+	"github.com/labstack/echo/v4"
 )
 
 func AuthRoutes(e *echo.Group) {

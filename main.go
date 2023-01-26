@@ -7,7 +7,7 @@ import (
 	"fmt"
 
 	"github.com/joho/godotenv" // import this package
-	"github.com/labstack/echo"
+	"github.com/labstack/echo/v4"
 )
 
 func main() {
