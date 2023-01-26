@@ -1,35 +1,36 @@
 ### Table of Contents
 
-- [GORM Relation belongs to](#gorm-relation-has-one)
+- [GORM Relation Has Many](#gorm-relation-has-many)
   - [Repository](#repository)
 
 ---
 
-# GORM Relation Has One
+# GORM Relation Has Many
 
-Reference: [Official GORM Website](https://gorm.io/docs/has_one.html)
+Reference: [Official GORM Website](https://gorm.io/docs/has_many.html)
 
-## Relation
-
-For this section, example Has One relation:
-
-- `User` &rarr; `Profile`: to get User Profile
 
 ## Models
 
-- Don't forget to add `Profile`, so User can access Profile response :
-
+- Don't forget to add  relation has many in `user.go` models like this :
   ```go
   type User struct {
-    ID        int             `json:"id"`
-    Name      string          `json:"name" gorm:"type: varchar(255)"`
-    Email     string          `json:"email" gorm:"type: varchar(255)"`
-    Password  string          `json:"-" gorm:"type: varchar(255)"`
-    Profile   ProfileResponse `json:"profile"`
-    CreatedAt time.Time       `json:"-"`
-    UpdatedAt time.Time       `json:"-"`
+    ID        int                   `json:"id"`
+    Name      string                `json:"name" gorm:"type: varchar(255)"`
+    Email     string                `json:"email" gorm:"type: varchar(255)"`
+    Password  string                `json:"-" gorm:"type: varchar(255)"`
+    Profile   ProfileResponse       `json:"profile"`
+    Products  []ProductUserResponse `json:"products"`
+    CreatedAt time.Time             `json:"-"`
+    UpdatedAt time.Time             `json:"-"`
   }
   ```
+
+## Relation
+
+For this section, example Has Many relation:
+
+- `User` &rarr; `Product`: to get User Product
 
 ## Repository
 
@@ -40,14 +41,14 @@ For this section, example Has One relation:
   ```go
   func (r *repository) FindUsers() ([]models.User, error) {
     var users []models.User
-    err := r.db.Preload("Profile").Find(&users).Error // add this code
+    err := r.db.Preload("Profile").Preload("Products").Find(&users).Error // add this code
 
     return users, err
   }
 
   func (r *repository) GetUser(ID int) (models.User, error) {
     var user models.User
-    err := r.db.Preload("Profile").First(&user, ID).Error // add this code
+    err := r.db.Preload("Profile").Preload("Products").First(&user, ID).Error // add this code
 
     return user, err
   }
