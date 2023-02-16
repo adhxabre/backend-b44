@@ -1,8 +1,6 @@
 package main
 
 import (
-	"dumbmerch/database"
-	"dumbmerch/pkg/mysql"
 	"dumbmerch/routes"
 	"fmt"
 
@@ -11,9 +9,6 @@ import (
 
 func main() {
 	e := echo.New()
-
-	mysql.DatabaseInit()
-	database.RunMigration()
 
 	routes.RouteInit(e.Group("/api/v1"))
 
