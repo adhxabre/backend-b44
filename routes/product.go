@@ -2,7 +2,6 @@ package routes
 
 import (
 	"dumbmerch/handlers"
-	"dumbmerch/pkg/middleware"
 	"dumbmerch/pkg/mysql"
 	"dumbmerch/repositories"
 
@@ -13,7 +12,7 @@ func ProductRoutes(e *echo.Group) {
 	productRepository := repositories.RepositoryProduct(mysql.DB)
 	h := handlers.HandlerProduct(productRepository)
 
-	e.GET("/products", middleware.Auth(h.FindProducts))
-	e.GET("/product/:id", middleware.Auth(h.GetProduct))
-	e.POST("/product", middleware.Auth(h.CreateProduct))
+	e.GET("/products", h.FindProducts)
+	e.GET("/product/:id", h.GetProduct)
+	e.POST("/product", h.CreateProduct)
 }
