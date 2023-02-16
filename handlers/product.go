@@ -5,7 +5,6 @@ import (
 	dto "dumbmerch/dto/result"
 	"dumbmerch/models"
 	"dumbmerch/repositories"
-	"fmt"
 	"net/http"
 	"strconv"
 
@@ -13,8 +12,6 @@ import (
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/labstack/echo/v4"
 )
-
-var path_file = "http://localhost:5000/uploads/"
 
 type handlerProduct struct {
 	ProductRepository repositories.ProductRepository
@@ -30,10 +27,6 @@ func (h *handlerProduct) FindProducts(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, dto.ErrorResult{Code: http.StatusBadRequest, Message: err.Error()})
 	}
 
-	for i, p := range products {
-		products[i].Image = path_file + p.Image
-	}
-
 	return c.JSON(http.StatusOK, dto.SuccessResult{Code: http.StatusOK, Data: products})
 }
 
@@ -46,14 +39,11 @@ func (h *handlerProduct) GetProduct(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, dto.ErrorResult{Code: http.StatusBadRequest, Message: err.Error()})
 	}
 
-	product.Image = path_file + product.Image
-
 	return c.JSON(http.StatusOK, dto.SuccessResult{Code: http.StatusOK, Data: convertResponseProduct(product)})
 }
 
 func (h *handlerProduct) CreateProduct(c echo.Context) error {
-	dataFile := c.Get("dataFile").(string)
-	fmt.Println("this is data file", dataFile)
+	// get the datafile here
 
 	price, _ := strconv.Atoi(c.FormValue("price"))
 	qty, _ := strconv.Atoi(c.FormValue("qty"))
@@ -63,7 +53,7 @@ func (h *handlerProduct) CreateProduct(c echo.Context) error {
 		Name:       c.FormValue("name"),
 		Desc:       c.FormValue("desc"),
 		Price:      price,
-		Image:      dataFile,
+		Image:      c.FormValue("image"), // change this
 		Qty:        qty,
 		CategoryID: category_id,
 	}
