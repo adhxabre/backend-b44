@@ -100,22 +100,6 @@ func (h *handler) UpdateUser(c echo.Context) error {
 	return c.JSON(http.StatusOK, dto.SuccessResult{Code: http.StatusOK, Data: convertResponse(data)})
 }
 
-func (h *handler) DeleteUser(c echo.Context) error {
-	id, _ := strconv.Atoi(c.Param("id"))
-
-	user, err := h.UserRepository.GetUser(id)
-	if err != nil {
-		return c.JSON(http.StatusBadRequest, dto.ErrorResult{Code: http.StatusBadRequest, Message: err.Error()})
-	}
-
-	data, err := h.UserRepository.DeleteUser(user, id)
-	if err != nil {
-		return c.JSON(http.StatusInternalServerError, dto.ErrorResult{Code: http.StatusInternalServerError, Message: err.Error()})
-	}
-
-	return c.JSON(http.StatusOK, dto.SuccessResult{Code: http.StatusOK, Data: convertResponse(data)})
-}
-
 func convertResponse(u models.User) usersdto.UserResponse {
 	return usersdto.UserResponse{
 		ID:       u.ID,
