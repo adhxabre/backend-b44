@@ -246,7 +246,7 @@
     "net/http"
     "strconv"
 
-    "github.com/labstack/echo"
+    "github.com/labstack/echo/v4"
   )
 
   type handler struct {
@@ -301,7 +301,7 @@
     "dumbmerch/pkg/mysql"
     "dumbmerch/repositories"
 
-    "github.com/labstack/echo"
+    "github.com/labstack/echo/v4"
   )
 
   func UserRoutes(e *echo.Group) {
@@ -326,7 +326,7 @@ import (
 	"dumbmerch/routes"
 	"fmt"
 
-	"github.com/labstack/echo"
+	"github.com/labstack/echo/v4"
 )
 
 func main() {
