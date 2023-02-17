@@ -1,6 +1,6 @@
 # Routing
 
-Routing in `labstack/echo` is pretty straightforward. Make sure you already understand the core concept of REST API like using GET/POST/PATCH/DELETE etc.
+Routing in `labstack/echo/v4` is pretty straightforward. Make sure you already understand the core concept of REST API like using GET/POST/PATCH/DELETE etc.
 
 `API` or `Application Programming Interface` is an interface that can connect one application with another application. Thus, the API acts as an intermediary between different applications, either within the same platform or across platforms.
 
@@ -20,7 +20,7 @@ Routing in `labstack/echo` is pretty straightforward. Make sure you already unde
 	"fmt"
 	"net/http"
 
-	"github.com/labstack/echo"
+	"github.com/labstack/echo/v4"
 	)
   	```
 
