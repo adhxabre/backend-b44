@@ -3,7 +3,7 @@ package routes
 import (
 	"dumbmerch/handlers"
 
-	"github.com/labstack/echo"
+	"github.com/labstack/echo/v4"
 )
 
 func TodoRoutes(e *echo.Group) {
