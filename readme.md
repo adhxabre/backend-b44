@@ -13,7 +13,7 @@ Group Routes are needed in API development to differentiate a route for API or f
   	```go
 	package routes
 
-	import "github.com/labstack/echo"
+	import "github.com/labstack/echo/v4"
 
 	func RouteInit(e *echo.Group) {
 		TodoRoutes(e)
@@ -30,7 +30,7 @@ Group Routes are needed in API development to differentiate a route for API or f
 	import (
 		"dumbmerch/handlers"
 
-		"github.com/labstack/echo"
+		"github.com/labstack/echo/v4"
 	)
 
 	func TodoRoutes(e *echo.Group) {
@@ -51,7 +51,7 @@ Group Routes are needed in API development to differentiate a route for API or f
 		"encoding/json"
 		"net/http"
 
-		"github.com/labstack/echo"
+		"github.com/labstack/echo/v4"
 	)
 
 	type Todos struct {
@@ -186,7 +186,7 @@ Group Routes are needed in API development to differentiate a route for API or f
 		"fmt"
 		"dumbmerch/routes"
 
-		"github.com/labstack/echo"
+		"github.com/labstack/echo/v4"
 	)
 
 	func main() {
