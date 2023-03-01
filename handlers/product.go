@@ -5,6 +5,7 @@ import (
 	dto "dumbmerch/dto/result"
 	"dumbmerch/models"
 	"dumbmerch/repositories"
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -44,6 +45,8 @@ func (h *handlerProduct) GetProduct(c echo.Context) error {
 
 func (h *handlerProduct) CreateProduct(c echo.Context) error {
 	// get the datafile here
+	dataFile := c.Get("dataFile").(string)
+	fmt.Println("this is data file", dataFile)
 
 	price, _ := strconv.Atoi(c.FormValue("price"))
 	qty, _ := strconv.Atoi(c.FormValue("qty"))
@@ -53,7 +56,7 @@ func (h *handlerProduct) CreateProduct(c echo.Context) error {
 		Name:       c.FormValue("name"),
 		Desc:       c.FormValue("desc"),
 		Price:      price,
-		Image:      c.FormValue("image"), // change this
+		Image:      dataFile, // change this
 		Qty:        qty,
 		CategoryID: category_id,
 	}
