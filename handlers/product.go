@@ -9,6 +9,7 @@ import (
 	"strconv"
 
 	"github.com/go-playground/validator/v10"
+	"github.com/golang-jwt/jwt/v4"
 	"github.com/labstack/echo/v4"
 )
 
@@ -54,6 +55,8 @@ func (h *handlerProduct) CreateProduct(c echo.Context) error {
 	}
 
 	// get the user id from auth here...
+	userLogin := c.Get("userLogin")
+	userId := userLogin.(jwt.MapClaims)["id"].(float64)
 
 	product := models.Product{
 		Name:  request.Name,
@@ -62,6 +65,7 @@ func (h *handlerProduct) CreateProduct(c echo.Context) error {
 		Image: request.Image,
 		Qty:   request.Qty,
 		// and set it here
+		UserID: int(userId),
 	}
 
 	product, err = h.ProductRepository.CreateProduct(product)
